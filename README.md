@@ -30,8 +30,8 @@ Features
 -----------
 * Support for alternating HROT rules
 * Automatic generation of pattern files for spaceship searches
-* Support for C1, D2| and D2- symmetries
-* Support for Glucose4, Glucose3, Lingeling, Cadical, Minisat and MapleSAT[/list]
+* Support for C1 symmetry
+* Support for Glucose4, Glucose3, Lingeling, Cadical, Minisat and MapleSAT
 
 TODO
 ----------
