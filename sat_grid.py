@@ -1,3 +1,5 @@
+import re
+
 from pysat.formula import CNF
 from pysat.solvers import Glucose4, Glucose3, Lingeling, Minisat22, Cadical
 from pysat.solvers import Minicard, MinisatGH, Maplesat, MapleChrono, MapleCM
@@ -5,8 +7,40 @@ from pysat.solvers import Minicard, MinisatGH, Maplesat, MapleChrono, MapleCM
 import RuleParser as RuleParser
 
 
+def bitonic_generator(size, check=False):
+    """Translation of https://www.inf.hs-flensburg.de/lang/algorithmen/sortieren/bitonic/oddn.htm
+    Generator approach inspired by https://en.wikipedia.org/wiki/Batcher_odd%E2%80%93even_mergesort
+    Code by Mateon1"""
+
+    def my_log2(n):  # floor(log2(n))
+        assert n >= 1
+        if n <= 2: return n - 1
+        return my_log2(n >> 1) + 1
+
+    def merge(low, n, d):
+        if n > 1:
+            m = 1 << my_log2(n - 1)
+            for i in range(low, low + n - m):
+                yield (True, i, i + m, d) if check else (i, i + m, d)
+            for c in merge(low, m, d): yield c
+            for c in merge(low + m, n - m, d): yield c
+
+    def sort(low, n, d):
+        if n > 1:
+            m = n >> 1
+            for c in sort(low, m, not d): yield c
+            for c in sort(low + m, n - m, d): yield c
+            for c in merge(low, n, d): yield c
+            if check:
+                for i in range(low, low + n - 1):
+                    yield False, i + (not d), i + d, None
+
+    return sort(0, size, False)
+
+
 class Grid:
     def __init__(self):
+        self.solver = None
         self.pattern = []  # Pattern from the text file provided
         self.formula = CNF()  # CNF for SAT Solving
         self.cnf_variables = {}  # Variables for the CNF
@@ -60,21 +94,37 @@ class Grid:
 
         for k in RuleParser.rule_string:
             self.survival_trans.append([])
-            for i in k.split("/")[0].split(","):
-                if "-" in i:
-                    for j in range(int(i.split("-")[0]), int(i.split("-")[1]) + 1):
-                        self.survival_trans[-1].append(j)
-                else:
-                    self.survival_trans[-1].append(int(i))
+            if "/" in k:  # Check if S/B Notation or B/S Notation
+                for i in k.split("/")[0].split(","):
+                    if "-" in i:
+                        for j in range(int(i.split("-")[0]), int(i.split("-")[1]) + 1):
+                            self.survival_trans[-1].append(j)
+                    else:
+                        self.survival_trans[-1].append(int(i))
+            else:
+                for i in re.split("[bs]", k)[1].split(","):
+                    if "-" in i:
+                        for j in range(int(i.split("-")[0]), int(i.split("-")[1]) + 1):
+                            self.survival_trans[-1].append(j)
+                    else:
+                        self.survival_trans[-1].append(int(i))
 
         for k in RuleParser.rule_string:
             self.birth_trans.append([])
-            for i in k.split("/")[1].split(","):
-                if "-" in i:
-                    for j in range(int(i.split("-")[0]), int(i.split("-")[1]) + 1):
-                        self.birth_trans[-1].append(j)
-                else:
-                    self.birth_trans[-1].append(int(i))
+            if "/" in k:  # Check if S/B Notation or B/S Notation
+                for i in k.split("/")[1].split(","):
+                    if "-" in i:
+                        for j in range(int(i.split("-")[0]), int(i.split("-")[1]) + 1):
+                            self.birth_trans[-1].append(j)
+                    else:
+                        self.birth_trans[-1].append(int(i))
+            else:
+                for i in re.split("[bs]", k)[0].split(","):
+                    if "-" in i:
+                        for j in range(int(i.split("-")[0]), int(i.split("-")[1]) + 1):
+                            self.birth_trans[-1].append(j)
+                    else:
+                        self.birth_trans[-1].append(int(i))
 
         # Turn into boolean arrays -> [True, False, True, ...]
         temp_birth_trans = [[True if x in self.birth_trans[y] else False for x in range(len(self.neighbourhood[y]) + 1)]
@@ -86,40 +136,10 @@ class Grid:
         self.birth_trans = temp_birth_trans
         self.survival_trans = temp_survival_trans
 
-    def bitonic_generator(self, size, check=False):
-        """Translation of https://www.inf.hs-flensburg.de/lang/algorithmen/sortieren/bitonic/oddn.htm
-        Generator approach inspired by https://en.wikipedia.org/wiki/Batcher_odd%E2%80%93even_mergesort
-        Code by Mateon1"""
-
-        def my_log2(n):  # floor(log2(n))
-            assert n >= 1
-            if n <= 2: return n - 1
-            return my_log2(n >> 1) + 1
-
-        def merge(low, n, d):
-            if n > 1:
-                m = 1 << my_log2(n - 1)
-                for i in range(low, low + n - m):
-                    yield (True, i, i + m, d) if check else (i, i + m, d)
-                for c in merge(low, m, d): yield c
-                for c in merge(low + m, n - m, d): yield c
-
-        def sort(low, n, d):
-            if n > 1:
-                m = n >> 1
-                for c in sort(low, m, not d): yield c
-                for c in sort(low + m, n - m, d): yield c
-                for c in merge(low, n, d): yield c
-                if check:
-                    for i in range(low, low + n - 1):
-                        yield False, i + (not d), i + d, None
-
-        return sort(0, size, False)
-
     def make_counter(self, lits):
         """Based on code by Mateon1"""
         sorts = [[]]
-        for (r, i, j, rev) in self.bitonic_generator(len(lits), check=True):
+        for (r, i, j, rev) in bitonic_generator(len(lits), check=True):
             if r is False:
                 sorts[-1].append((lits[j], lits[i]))
                 self.formula.append([-lits[i], lits[j]])
@@ -195,19 +215,36 @@ class Grid:
             if True in clause: continue
             new_clauses.append([x for x in clause if x != False])
 
-        # Force at least one cell to be on in the first generation
-        clause = []
-        for key in self.cnf_variables:
-            var = self.get_cell_var(key[0], key[1], key[2])
-            if type(var) == int: clause.append(var)  # Check for CNF Literal (int)
-
-        self.formula.append(clause)
-
         return new_clauses
 
-    def set_formula(self):
-        """Sets the CNF formula according to the pattern"""
+    def force_change(self, g1, g2):
+        """Adds clauses forcing at least one cell to change between specified generations, method suggested by Macbi
+        and Mateon1 """
 
+        clauses = []
+        shadow_vars = {}
+
+        # Form a shadow grid that says cell in grid 1 is the same as cell in grid 2
+        for i in range(len(self.pattern[0])):
+            for j in range(len(self.pattern[0][i])):
+                shadow_vars[(i, j)] = self.allocate_var()
+
+                # Represents (A XOR B) XNOR C
+                clauses.append([-self.get_cell_var(g1, i, j), -self.get_cell_var(g2, i, j), -shadow_vars[(i, j)]])
+                clauses.append([-self.get_cell_var(g1, i, j), self.get_cell_var(g2, i, j), shadow_vars[(i, j)]])
+                clauses.append([self.get_cell_var(g1, i, j), -self.get_cell_var(g2, i, j), shadow_vars[(i, j)]])
+                clauses.append([self.get_cell_var(g1, i, j), self.get_cell_var(g2, i, j), -shadow_vars[(i, j)]])
+
+        # Force one of the shadow vars to be True
+        clause = []
+        for var in shadow_vars:
+            clause.append(shadow_vars[var])
+
+        clauses.append(clause)
+        return clauses
+
+    def set_formula(self, force_change_lst=()):
+        """Sets the CNF formula according to the pattern"""
         # First, add variables and constrains based on the pattern provided
         for i in range(len(self.pattern)):
             for j in range(len(self.pattern[i])):
@@ -237,44 +274,72 @@ class Grid:
                     for clause in self.get_rule_boolean(i, j, k):
                         self.formula.append(clause)
 
-    def solve(self, solver_type):
+        # Force at least one cell to be on in the first generation
+        clause = []
+        for key in self.cnf_variables:
+            var = self.get_cell_var(key[0], key[1], key[2])
+            if type(var) == int: clause.append(var)  # Check for CNF Literal (int)
+
+        self.formula.append(clause)
+
+        # Force generations to be different
+        for i in range(len(force_change_lst)):
+            for j in range(i + 1, len(force_change_lst)):
+                for clause in self.force_change(force_change_lst[i], force_change_lst[j]):
+                    self.formula.append(clause)
+
+    def solve(self, solver_type, previous_solution=None):
         """Runs SAT Solver on the CNF Formula"""
 
-        # Make it case insensitive
-        solver_type = solver_type.lower()
+        # Add clause to say that it must differ from the previous solution by at least one cell
+        if previous_solution is not None and len(previous_solution) != 0:
+            clause = []
+            for i in previous_solution:
+                clause.append(-i)
 
-        # Check which solver to use
-        if solver_type == "glucose4" or solver_type == "glucose" or solver_type == "g4" or solver_type == "g":
-            solver = Glucose4(bootstrap_with=self.formula.clauses, with_proof=True)
-        elif solver_type == "glucose3" or solver_type == "g3":
-            solver = Glucose3(bootstrap_with=self.formula.clauses, with_proof=True)
-        elif solver_type == "lingeling":
-            solver = Lingeling(bootstrap_with=self.formula.clauses, with_proof=True)
-        elif solver_type == "minisat22" or solver_type == "minisat":
-            solver = Minisat22(bootstrap_with=self.formula.clauses)
-        elif solver_type == "cadical":
-            solver = Cadical(bootstrap_with=self.formula.clauses)
-        elif solver_type == "minisatgithub" or solver_type == "minisatgh":
-            solver = MinisatGH(bootstrap_with=self.formula.clauses)
-        elif solver_type == "minicard":
-            solver = Minicard(bootstrap_with=self.formula.clauses)
-        elif solver_type == "maplesat":
-            solver = Maplesat(bootstrap_with=self.formula.clauses)
-        elif solver_type == "maplechrono":
-            solver = MapleChrono(bootstrap_with=self.formula.clauses)
-        elif solver_type == "maplecm":
-            solver = MapleCM(bootstrap_with=self.formula.clauses)
-        else:  # Default to Glucose4
-            print(f"WARNING: {solver_type} not a valid / supported SAT solver, defaulting to Glucose4.")
-            solver = Glucose4(bootstrap_with=self.formula.clauses, with_proof=True)
+            self.solver.add_clause(clause)
 
-        # Start solving
-        if not solver.solve():
-            self.UNSAT = True  # Get UNSAT Core
-            self.solution = solver.get_core()
+            # Start solving
+            if not self.solver.solve():
+                self.UNSAT = True
+            else:
+                self.UNSAT = False  # Get solution
+                self.solution = self.solver.get_model()
         else:
-            self.UNSAT = False  # Get solution
-            self.solution = solver.get_model()
+            # Make it case insensitive
+            solver_type = solver_type.lower()
+
+            # Check which solver to use
+            if solver_type == "glucose4" or solver_type == "glucose" or solver_type == "g4" or solver_type == "g":
+                self.solver = Glucose4(bootstrap_with=self.formula.clauses, with_proof=True)
+            elif solver_type == "glucose3" or solver_type == "g3":
+                self.solver = Glucose3(bootstrap_with=self.formula.clauses, with_proof=True)
+            elif solver_type == "lingeling":
+                self.solver = Lingeling(bootstrap_with=self.formula.clauses, with_proof=True)
+            elif solver_type == "minisat22" or solver_type == "minisat":
+                self.solver = Minisat22(bootstrap_with=self.formula.clauses)
+            elif solver_type == "cadical":
+                self.solver = Cadical(bootstrap_with=self.formula.clauses)
+            elif solver_type == "minisatgithub" or solver_type == "minisatgh":
+                self.solver = MinisatGH(bootstrap_with=self.formula.clauses)
+            elif solver_type == "minicard":
+                self.solver = Minicard(bootstrap_with=self.formula.clauses)
+            elif solver_type == "maplesat":
+                self.solver = Maplesat(bootstrap_with=self.formula.clauses)
+            elif solver_type == "maplechrono":
+                self.solver = MapleChrono(bootstrap_with=self.formula.clauses)
+            elif solver_type == "maplecm":
+                self.solver = MapleCM(bootstrap_with=self.formula.clauses)
+            else:  # Default to Glucose4
+                print(f"WARNING: {solver_type} not a valid / supported SAT solver, defaulting to Glucose4.")
+                self.solver = Glucose4(bootstrap_with=self.formula.clauses, with_proof=True)
+
+            # Start solving
+            if not self.solver.solve():
+                self.UNSAT = True
+            else:
+                self.UNSAT = False  # Get solution
+                self.solution = self.solver.get_model()
 
     def to_rle(self):
         """Converts solution to RLE"""

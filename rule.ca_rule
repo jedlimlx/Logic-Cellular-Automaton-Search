@@ -1,13 +1,13 @@
-Name: Rule
+Name: R2,C2,M0,S5..9,B7..8,NM
 
 Neighbourhood Range: 2
 
 Neighbourhood:
-0,0,1,0,0
-0,1,1,1,0
+1,1,1,1,1
+1,1,1,1,1
 1,1,0,1,1
-0,1,1,1,0
-0,0,1,0,0
+1,1,1,1,1
+1,1,1,1,1
 
 State Weights: 0,1
 
@@ -15,7 +15,7 @@ Rulespace: Single State
 
 B/S Conditions: Outer Totalistic
 
-Rulestring: 2,4,12/3,8
+Rulestring: 5-9/7-8
 
 Colour Palette:
 None

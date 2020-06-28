@@ -9,11 +9,13 @@ If you don't already have Python 3 try using WSL.
 
 If that doesn't work (it probably won't) or you are on Linux, go to Windows Subsystems for Linux (if you are on Windows 10)
 Run these commands:
-``sudo apg-get update
+```
+sudo apt-get update
 sudo apt-get install python3.6-dev
 sudo apt install python3-pip
 sudo apt-get install zlib1g-dev
-pip3 install python-sat```
+pip3 install python-sat
+```
 
 Don't be alarmed if there are warnings produced by "pip3 install python-sat". Just let it run to completion.
 
@@ -30,7 +32,8 @@ Features
 -----------
 * Support for alternating HROT rules
 * Automatic generation of pattern files for spaceship searches
-* Support for C1 symmetry
+* Support for C1, D2|, D2- symmetry
+* Support for Id, Flip| Transformation
 * Support for Glucose4, Glucose3, Lingeling, Cadical, Minisat and MapleSAT
 
 TODO
@@ -39,6 +42,42 @@ TODO
 * Isotropic Non-Totalistic Rules
 * Anisotropic Non-Totalistic Rules
 * Multistate Rules
+* More symmetries and transformations
+* Background generation (Zebra Strips, Chicken Wire)
+* Pattern generation for backsearches
+
+Rule Format
+---------
+Supports alternating HROT rules (B0 can be searched by alternating the relevant rules)
+```
+Name: Hello World (Can be Anything you like)
+
+Neighbourhood Range: 2 (Change to the range of the neighbourhood)
+
+Neighbourhood: (Use Commas, Numbers are Weights, For Alternating Place '-' below it and continue)
+0,0,0,0,0
+0,1,1,1,0
+0,1,0,1,0
+0,1,1,1,0
+0,0,0,0,0
+######### (As many as you like, Recommended is Same Length)
+0,0,1,0,0
+0,1,1,1,0
+1,1,0,1,1
+0,1,1,1,0
+0,0,1,0,0
+
+State Weights: 0,1 -> Separate by Commas, For Alternating Put | (No Max, Don't Leave Spaces)
+
+Rulespace: Single State
+
+B/S Conditions: Outer Totalistic
+
+Rulestring: -> For Alternating Put | (No Max, Don't Leave Spaces)
+b3s2,3 or 2,3/3 (Outer Totalistic)
+
+(Must Add Commas because of Extended Neighbourhood, Don't Leave Spaces)
+```
 
 Speed
 ------------
