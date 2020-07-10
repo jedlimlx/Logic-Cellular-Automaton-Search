@@ -1,7 +1,7 @@
 import argparse
 import time
 
-import RuleParser
+import rule_parser
 from pattern_gen import ship_search
 from sat_grid import Grid
 
@@ -39,11 +39,11 @@ parser.add_argument("-s", "--solver", help="SAT solver (default: cadical)", defa
 args = parser.parse_args()
 
 # Generate pattern
-RuleParser.load(args.rule)
+rule_parser.load(args.rule)
 
 if args.pattern is None:
     ship_search(int(args.period), int(args.bound_x), int(args.bound_y), int(args.displace_x), int(args.displace_y),
-                args.symmetry, args.transform, RuleParser.neighbourhood_range * 2, "pattern.txt")
+                args.symmetry, args.transform, rule_parser.neighbourhood_range * 2, "pattern.txt")
 
 force_change = [int(x) for x in args.force_change.split(",")] if args.force_change is not None else ()
 
