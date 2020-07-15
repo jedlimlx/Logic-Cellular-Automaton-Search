@@ -26,19 +26,19 @@ Run
 ```python main.py --help```
 for more options
 
-The rule format is the same as CAViewer's rule.ca_rule format. You will need to specify a rule file with the relevant rule to run the program. If no rule is specified it defaults to rule.ca_rule.
-
 Features
 -----------
 * Support for alternating HROT rules
 * Automatic generation of pattern files for spaceship searches
-* Support for C1, D2|, D2- symmetry
+* Support for C1, D2|, D2-, D4+ symmetry
 * Support for Id, Flip| Transformation
-* Support for Glucose4, Glucose3, Lingeling, Cadical, Minisat and MapleSAT
+* Support for Glucose4, Glucose3, Lingeling, Cadical, Minisat, Minicard and MapleSAT
 
 TODO
 ----------
-* Partial rules
+* Fix Partial rules
+* Fix B0 rules
+* Support for rulestrings
 * Isotropic Non-Totalistic Rules
 * Anisotropic Non-Totalistic Rules
 * Multistate Rules
@@ -48,7 +48,7 @@ TODO
 
 Rule Format
 ---------
-Supports alternating HROT rules (B0 can be searched by alternating the relevant rules)
+Supports alternating HROT rules (B0 is supported but not really working)
 ```
 Name: Hello World (Can be Anything you like)
 
@@ -74,9 +74,13 @@ Rulespace: Single State
 B/S Conditions: Outer Totalistic
 
 Rulestring: -> For Alternating Put | (No Max, Don't Leave Spaces)
-b3s2,3 or 2,3/3 (Outer Totalistic)
+b3s2,3 or 2,3/3 or b2-3s3 or 2-3/3 (Outer Totalistic)
 
-(Must Add Commas because of Extended Neighbourhood, Don't Leave Spaces)
+To specify partial rules, 
+/3 - 0-8/3-8
+
+First rule is min rule, the second is the max.
+Make sure there are spaces before and after the "-" like " - ".
 ```
 
 Speed

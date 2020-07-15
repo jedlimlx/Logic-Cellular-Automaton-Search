@@ -1,11 +1,13 @@
 Name: RULE
 
-Neighbourhood Range: 1
+Neighbourhood Range: 2
 
 Neighbourhood:
-1,1,1
-1,0,1
-1,1,1
+0,0,1,0,0
+0,1,1,1,0
+1,1,0,1,1
+0,1,1,1,0
+0,0,1,0,0
 
 State Weights: 0,1
 
@@ -13,7 +15,7 @@ Rulespace: Single State
 
 B/S Conditions: Outer Totalistic
 
-Rulestring: 8/3 - 0-8/3-8
+Rulestring: 9/0-3
 
 Colour Palette:
 None

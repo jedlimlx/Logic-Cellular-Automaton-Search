@@ -89,7 +89,8 @@ class Grid:
             if i == "\n":
                 self.pattern.append([])
             else:
-                self.pattern[-1].append([x.replace("\n", "") for x in i.split(" ") if x.replace("\n", "") != ""])
+                self.pattern[-1].append([x.replace("\n", "") for x in i.split(" ")
+                                         if x.replace("\n", "") != ""])
 
         while [] in self.pattern:  # Remove trailing empty list
             self.pattern.remove([])
@@ -213,8 +214,8 @@ class Grid:
         return new_clauses
 
     def force_change(self, g1, g2):
-        """Adds clauses forcing at least one cell to change between specified generations, method suggested by Macbi
-        and Mateon1 """
+        """Adds clauses forcing at least one cell to change between specified generations,
+        method suggested by Macbi and Mateon1 """
 
         clauses = []
         shadow_vars = {}
@@ -227,9 +228,12 @@ class Grid:
                 # Represents (A XOR B) XNOR C
                 clauses.append([negate(self.get_cell_var(g1, i, j)),
                                 negate(self.get_cell_var(g2, i, j)), negate(shadow_vars[(i, j)])])
-                clauses.append([negate(self.get_cell_var(g1, i, j)), self.get_cell_var(g2, i, j), shadow_vars[(i, j)]])
-                clauses.append([self.get_cell_var(g1, i, j), negate(self.get_cell_var(g2, i, j)), shadow_vars[(i, j)]])
-                clauses.append([self.get_cell_var(g1, i, j), self.get_cell_var(g2, i, j), negate(shadow_vars[(i, j)])])
+                clauses.append([negate(self.get_cell_var(g1, i, j)),
+                                self.get_cell_var(g2, i, j), shadow_vars[(i, j)]])
+                clauses.append([self.get_cell_var(g1, i, j),
+                                negate(self.get_cell_var(g2, i, j)), shadow_vars[(i, j)]])
+                clauses.append([self.get_cell_var(g1, i, j),
+                                self.get_cell_var(g2, i, j), negate(shadow_vars[(i, j)])])
 
         # Force one of the shadow vars to be True
         clause = []
@@ -306,7 +310,8 @@ class Grid:
             solver_type = solver_type.lower()
 
             # Check which solver to use
-            if solver_type == "glucose4" or solver_type == "glucose" or solver_type == "g4" or solver_type == "g":
+            if solver_type == "glucose4" or solver_type == "glucose" or \
+                    solver_type == "g4" or solver_type == "g":
                 self.solver = Glucose4(bootstrap_with=self.formula.clauses, with_proof=True)
             elif solver_type == "glucose3" or solver_type == "g3":
                 self.solver = Glucose3(bootstrap_with=self.formula.clauses, with_proof=True)
@@ -341,8 +346,10 @@ class Grid:
         """Converts solution to RLE"""
 
         # Getting solution for partial rule
-        birth_solution = [[y in self.solution if type(y) is int else y for y in x] for x in self.birth_trans]
-        survival_solution = [[y in self.solution if type(y) is int else y for y in x] for x in self.survival_trans]
+        birth_solution = [[y in self.solution if type(y) is int else y for y in x]
+                          for x in self.birth_trans]
+        survival_solution = [[y in self.solution if type(y) is int else y for y in x]
+                             for x in self.survival_trans]
 
         # Get birth string
         temp = []
@@ -356,10 +363,11 @@ class Grid:
             if survival_solution[0][i]: temp.append(str(i))
         survival_string = ",".join(temp)
 
+        # Generate RLE Header
         rle_header = f"x = {len(self.pattern[0][0])}, y = {len(self.pattern[0])}, " \
                      f"rule = B{birth_string}/S{survival_string}\n"
         rle = ""
-        for g in range(1):
+        for g in range(len(self.pattern)):
             for i in range(len(self.pattern[0])):
                 for j in range(len(self.pattern[0][0])):
                     # Get the variable number of that cell

@@ -1,5 +1,6 @@
 import re
 from typing import List, Tuple, Set
+import b0_lyser
 
 colour_palette_count: int = 0
 colour_palette = []
@@ -85,3 +86,14 @@ def load(filename):
             if neighbourhood_weights[j][i] != 0:
                 neighbourhood[j].append((i // (2 * neighbourhood_range + 1) - neighbourhood_range,
                                          i % (2 * neighbourhood_range + 1) - neighbourhood_range))
+
+    # Apply B0
+    rule_string = [b0_lyser.b0_lyser(x, rulespace, bs_conditions,
+                                     [len(y) for y in neighbourhood]) for x in rule_string]
+
+    # Increase size of neighbourhood to match
+    if len(rule_string[0]) > len(neighbourhood):
+        temp = []
+        for i in neighbourhood:
+            temp += [i] * 2
+        neighbourhood = temp
