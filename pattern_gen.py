@@ -17,7 +17,7 @@ def ship_search(period, x, y, dx, dy, symmetry, transform, nrange, pattern_file)
         for i in range(y - nrange * 2 + dy):
             file.write("0 " * nrange)
             if (symmetry == "D2|" or symmetry == "D4+") and ((i > 0 and t == 0) or (i > dy and t == period)):
-                num_vars += origin_x // 2 + 1
+                num_vars += origin_x // 2 + 2
 
             if symmetry == "D2-" or symmetry == "D4+":
                 if origin_y % 2:  # If odd
