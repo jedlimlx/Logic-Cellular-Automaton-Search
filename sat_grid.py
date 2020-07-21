@@ -184,7 +184,7 @@ class Grid:
 
         # Based on code by Mateon1
         cn = [True] + neighbours
-        for i in range(len(neighbours)):
+        for i in range(len(cn)):
             if i == 0:
                 guard = [cn[1]]
             elif i < len(cn) - 1:
@@ -294,8 +294,13 @@ class Grid:
         # Add clause to say that it must differ from the previous solution by at least one cell
         if previous_solution is not None and len(previous_solution) != 0:
             clause = []
-            for i in previous_solution:
-                clause.append(negate(i))
+            for i in range(len(self.pattern)):
+                for j in range(len(self.pattern[i])):
+                    for k in range(len(self.pattern[i][j])):
+                        if self.get_cell_var(i, j, k) in previous_solution:
+                            clause.append(negate(self.get_cell_var(i, j, k)))
+                        else:
+                            clause.append(self.get_cell_var(i, j, k))
 
             self.solver.add_clause(clause)
 
