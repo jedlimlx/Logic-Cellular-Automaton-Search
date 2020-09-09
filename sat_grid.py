@@ -1,5 +1,6 @@
 import re
 
+from pysat.pb import PBEnc
 from pysat.formula import CNF
 from pysat.solvers import Glucose4, Glucose3, Lingeling, Minisat22, Cadical
 from pysat.solvers import Minicard, MinisatGH, Maplesat, MapleChrono, MapleCM
@@ -89,7 +90,7 @@ class Grid:
             if i == "\n":
                 self.pattern.append([])
             else:
-                self.pattern[-1].append([x.replace("\n", "") for x in i.split(" ")
+                self.pattern[-1].append([x.replace("\n", "") for x in re.split("[ ,]+", i)
                                          if x.replace("\n", "") != ""])
 
         while [] in self.pattern:  # Remove trailing empty list
@@ -243,7 +244,7 @@ class Grid:
         clauses.append(clause)
         return clauses
 
-    def set_formula(self, force_change_lst=()):
+    def set_formula(self, force_change_lst=(), population_bound=""):
         """Sets the CNF formula according to the pattern"""
         # First, add variables and constrains based on the pattern provided
         for i in range(len(self.pattern)):
@@ -274,13 +275,41 @@ class Grid:
                     for clause in self.get_rule_boolean(i, j, k):
                         self.formula.append(clause)
 
-        # Force at least one cell to be on in the first generation
+        # Enforce population bounds
         clause = []
         for key in self.cnf_variables:
             var = self.get_cell_var(key[0], key[1], key[2])
             if type(var) == int: clause.append(var)  # Check for CNF Literal (int)
 
-        self.formula.append(clause)
+        # Using regex to parse string
+        bounds = re.findall("(?:>|<|>=|<=|=)[0-9]+", population_bound)
+        for bound in bounds:
+            pop_clauses = []
+            if bound[0] == ">":  # Greater than
+                if "=" in bound: population = int(bound[2:])  # Checking for "equal to"
+                else: population = int(bound[1:]) + 1
+
+                # Clauses that bound the population
+                pop_clauses = PBEnc.atleast(lits=clause, bound=population, top_id=self.num_vars)
+
+            elif bound[0] == "<":  # Smaller than
+                if "=" in bound:
+                    population = int(bound[2:])  # Checking for "equal to"
+                else:
+                    population = int(bound[1:]) + 1
+
+                # Clauses that bound the population
+                pop_clauses = PBEnc.atmost(lits=clause, bound=population, top_id=self.num_vars)
+
+            elif bound[0] == "=":  # Equal to
+                population = int(bound[1:])
+
+                # Clauses that bound the population
+                pop_clauses = PBEnc.equals(lits=clause, bound=population, top_id=self.num_vars)
+
+            for cl in pop_clauses:  # Adding in the population clauses
+                self.formula.append(cl)
+                self.num_vars = max(self.num_vars, max([abs(x) for x in cl]))
 
         # Force generations to be different
         for i in range(len(force_change_lst)):
@@ -317,11 +346,11 @@ class Grid:
             # Check which solver to use
             if solver_type == "glucose4" or solver_type == "glucose" or \
                     solver_type == "g4" or solver_type == "g":
-                self.solver = Glucose4(bootstrap_with=self.formula.clauses, with_proof=True)
+                self.solver = Glucose4(bootstrap_with=self.formula.clauses)
             elif solver_type == "glucose3" or solver_type == "g3":
-                self.solver = Glucose3(bootstrap_with=self.formula.clauses, with_proof=True)
+                self.solver = Glucose3(bootstrap_with=self.formula.clauses)
             elif solver_type == "lingeling":
-                self.solver = Lingeling(bootstrap_with=self.formula.clauses, with_proof=True)
+                self.solver = Lingeling(bootstrap_with=self.formula.clauses)
             elif solver_type == "minisat22" or solver_type == "minisat":
                 self.solver = Minisat22(bootstrap_with=self.formula.clauses)
             elif solver_type == "cadical":
@@ -336,9 +365,9 @@ class Grid:
                 self.solver = MapleChrono(bootstrap_with=self.formula.clauses)
             elif solver_type == "maplecm":
                 self.solver = MapleCM(bootstrap_with=self.formula.clauses)
-            else:  # Default to Glucose4
-                print(f"WARNING: {solver_type} not a valid / supported SAT solver, defaulting to Glucose4.")
-                self.solver = Glucose4(bootstrap_with=self.formula.clauses, with_proof=True)
+            else:  # Default to Cadical
+                print(f"WARNING: {solver_type} not a valid / supported SAT solver, defaulting to Cadical.")
+                self.solver = Cadical(bootstrap_with=self.formula.clauses)
 
             # Start solving
             if not self.solver.solve():
@@ -372,7 +401,7 @@ class Grid:
         rle_header = f"x = {len(self.pattern[0][0])}, y = {len(self.pattern[0])}, " \
                      f"rule = B{birth_string}/S{survival_string}\n"
         rle = ""
-        for g in range(len(self.pattern)):
+        for g in range(1):
             for i in range(len(self.pattern[0])):
                 for j in range(len(self.pattern[0][0])):
                     # Get the variable number of that cell

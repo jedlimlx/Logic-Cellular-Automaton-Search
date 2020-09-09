@@ -1,5 +1,5 @@
 import re
-from typing import List, Tuple, Set
+from typing import List
 import b0_lyser
 
 colour_palette_count: int = 0
@@ -83,7 +83,7 @@ def load(filename):
     for j in range(len(neighbourhood_weights)):
         neighbourhood.append([])
         for i in range((2 * neighbourhood_range + 1) ** 2):
-            if neighbourhood_weights[j][i] != 0:
+            for k in range(neighbourhood_weights[j][i]):
                 neighbourhood[j].append((i // (2 * neighbourhood_range + 1) - neighbourhood_range,
                                          i % (2 * neighbourhood_range + 1) - neighbourhood_range))
 

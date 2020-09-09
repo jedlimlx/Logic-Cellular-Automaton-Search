@@ -5,6 +5,7 @@ def get_outer_totalistic_trans(rulestring):
     """Gets transitions for outer totalistic rule"""
     transitions = []
     for i in rulestring.split(","):
+        if i == '': break
         if "-" in i:
             for j in range(int(i.split("-")[0]), int(i.split("-")[1]) + 1):
                 transitions.append(j)
