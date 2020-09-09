@@ -1,42 +1,6 @@
-"""
-Rule Format (.ca_rule)
---------------
-Name: Hello World (Can be Anything you like)
-
-Neighbourhood Range: 2 (Can be Any Number, >3 gets slow)
-
-Neighbourhood: (Use Commas, Numbers are Weights, For Alternating Place '-' below it and continue)
-0,0,0,0,0
-0,1,1,1,0
-0,1,0,1,0
-0,1,1,1,0
-0,0,0,0,0
-######### (As many as you like, Recommended is Same Length)
-0,0,1,0,0
-0,1,1,1,0
-1,1,0,1,1
-0,1,1,1,0
-0,0,1,0,0
-
-State Weights: 0,1 -> Separate by Commas, For Alternating Put | (No Max, Don't Leave Spaces)
-
-Rulespace: BSFKL / Extended Generations / Outer Totalistic
-Will Add 3-state Outer Totalistic and Range 2 Isotropic Von Neumann (Need Help with This) Soon
-
-Rulestring: -> For Alternating Put | (No Max, Don't Leave Spaces)
-b1s2f3k4l5 or 1/2/3/4/5 (BSFKL)
-b3,4,5s4d1-1-1 or 4/3,4,5/1-1-1 (Extended Generations)
-b3s2,3 or 2,3/3 (Outer Totalistic)
-
-(Must Add Commas because of Extended Neighbourhood, Don't Leave Spaces)
-
-Colour Palette: -> RGB (To Tell Program to Auto Generate Put None Below Colour Palette)
-1 (0, 0, 0)
-2 (255, 255, 255)
-
-"""
 import re
-from typing import List, Tuple, Set
+from typing import List
+import b0_lyser
 
 colour_palette_count: int = 0
 colour_palette = []
@@ -109,7 +73,8 @@ def load(filename):
         elif "Neighbourhood Range:" in section:
             neighbourhood_range = int(section.replace("Neighbourhood Range: ", ""))
         elif "Rulestring:" in section:
-            rule_string = section.replace("Rulestring: ", "").split("|")
+            rule_string = [[x.lower() for x in rulestring.split("|")] for rulestring in
+                           section.replace("Rulestring: ", "").split(" - ")]
         elif "Rulespace:" in section:
             rulespace = section.replace("Rulespace: ", "")
         elif "B/S Conditions:" in section:
@@ -118,6 +83,17 @@ def load(filename):
     for j in range(len(neighbourhood_weights)):
         neighbourhood.append([])
         for i in range((2 * neighbourhood_range + 1) ** 2):
-            if neighbourhood_weights[j][i] != 0:
+            for k in range(neighbourhood_weights[j][i]):
                 neighbourhood[j].append((i // (2 * neighbourhood_range + 1) - neighbourhood_range,
                                          i % (2 * neighbourhood_range + 1) - neighbourhood_range))
+
+    # Apply B0
+    rule_string = [b0_lyser.b0_lyser(x, rulespace, bs_conditions,
+                                     [len(y) for y in neighbourhood]) for x in rule_string]
+
+    # Increase size of neighbourhood to match
+    if len(rule_string[0]) > len(neighbourhood):
+        temp = []
+        for i in neighbourhood:
+            temp += [i] * 2
+        neighbourhood = temp

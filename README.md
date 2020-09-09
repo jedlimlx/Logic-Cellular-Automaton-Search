@@ -1,4 +1,4 @@
-I've been working on this program for a few days now. I would like to thank Mateon1 for helping me with CNF and debugging and WildMyron for the original idea.
+I would like to thank Mateon1 for helping me with CNF and debugging and WildMyron for the original idea of using a SAT / SMT solver.
 
 Installation
 ------------
@@ -14,10 +14,13 @@ sudo apt-get update
 sudo apt-get install python3.6-dev
 sudo apt install python3-pip
 sudo apt-get install zlib1g-dev
-pip3 install python-sat
+pip3 install python-sat[pblib, aiger]
 ```
 
-Don't be alarmed if there are warnings produced by "pip3 install python-sat". Just let it run to completion.
+Don't be alarmed if there are warnings produced by `pip3 install "python-sat[pblib, aiger]"`. 
+Just let it run to completion.
+
+Ensure that you run the command `pip3 install python-sat[pblib, aiger]` and not `pip3 install python-sat`
 
 To use the application, run
 ```python main.py -p <period> -dx <displace_x> -dy <displace_y> -x <bound_x> -y <bound_y>```
@@ -26,19 +29,22 @@ Run
 ```python main.py --help```
 for more options
 
-The rule format is the same as CAViewer's rule.ca_rule format. You will need to specify a rule file with the relevant rule to run the program. If no rule is specified it defaults to rule.ca_rule.
-
 Features
 -----------
 * Support for alternating HROT rules
+* Support for alternating? B0 rules
 * Automatic generation of pattern files for spaceship searches
-* Support for C1, D2|, D2- symmetry
+* Support for C1, D2|, D2-, D4+ symmetry
 * Support for Id, Flip| Transformation
-* Support for Glucose4, Glucose3, Lingeling, Cadical, Minisat and MapleSAT
+* Support for Glucose4, Glucose3, Lingeling, Cadical, Minisat, Minicard and MapleSAT (Kissat coming soon)
+
+Note: I don't guarantee that alternating B0 rules work or that alternating B0 rules with normal rules will work
 
 TODO
 ----------
-* Partial rules
+* Fix partial rules
+* Fix population bounds
+* Support for rulestrings
 * Isotropic Non-Totalistic Rules
 * Anisotropic Non-Totalistic Rules
 * Multistate Rules
@@ -48,7 +54,7 @@ TODO
 
 Rule Format
 ---------
-Supports alternating HROT rules (B0 can be searched by alternating the relevant rules)
+Supports alternating HROT rules
 ```
 Name: Hello World (Can be Anything you like)
 
@@ -74,9 +80,13 @@ Rulespace: Single State
 B/S Conditions: Outer Totalistic
 
 Rulestring: -> For Alternating Put | (No Max, Don't Leave Spaces)
-b3s2,3 or 2,3/3 (Outer Totalistic)
+b3s2,3 or 2,3/3 or b2-3s3 or 2-3/3 (Outer Totalistic)
 
-(Must Add Commas because of Extended Neighbourhood, Don't Leave Spaces)
+To specify partial rules, 
+/3 - 0-8/3-8
+
+First rule is min rule, the second is the max.
+Make sure there are spaces before and after the "-" like " - ".
 ```
 
 Speed
