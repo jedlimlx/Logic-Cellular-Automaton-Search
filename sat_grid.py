@@ -2,7 +2,7 @@ import re
 
 from pysat.pb import PBEnc
 from pysat.formula import CNF
-from pysat.solvers import Glucose4, Glucose3, Lingeling, Minisat22, Cadical
+from pysat.solvers import Glucose4, Glucose3, Lingeling, Minisat22, Cadical153 as Cadical
 from pysat.solvers import Minicard, MinisatGH, Maplesat, MapleChrono, MapleCM
 
 import rule_parser
