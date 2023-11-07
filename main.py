@@ -39,8 +39,13 @@ parser.add_argument("-s", "--solver", help="SAT solver (default: cadical)", defa
 
 args = parser.parse_args()
 
+
 # Generate pattern
-rule_parser.load(args.rule)
+try:
+    rule_parser.load(args.rule)
+except FileNotFoundError:
+    args.rule = args.rule+'.ca_rule'
+    rule_parser.load(args.rule)
 
 if args.pattern is None:
     args.pattern = "pattern.txt"
