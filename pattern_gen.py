@@ -26,7 +26,7 @@ def ship_search(period, x, y, dx, dy, symmetry, transform, nrange, pattern_file)
                     elif i > origin_y // 2:
                         num_vars = (origin_y - i - 1) * origin_x
                 else:  # If even
-                    if i < origin_y // 2 - 1:
+                    if i <= origin_y // 2 - 1:
                         num_vars = i * origin_x
                     elif i > origin_y // 2 - 1:
                         num_vars = (origin_y - i - 1) * origin_x
