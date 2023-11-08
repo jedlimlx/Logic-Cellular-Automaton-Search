@@ -39,19 +39,25 @@ parser.add_argument("-s", "--solver", help="SAT solver (default: cadical)", defa
 
 args = parser.parse_args()
 
+
 # Generate pattern
-rule_parser.load(args.rule)
+try:
+    rule_parser.load(args.rule)
+except FileNotFoundError:
+    args.rule = args.rule+'.ca_rule'
+    rule_parser.load(args.rule)
 
 if args.pattern is None:
+    args.pattern = "pattern.txt"
     ship_search(int(args.period), int(args.bound_x), int(args.bound_y), int(args.displace_x), int(args.displace_y),
-                args.symmetry, args.transform, rule_parser.neighbourhood_range * 2, "pattern.txt")
+                args.symmetry, args.transform, rule_parser.neighbourhood_range * 2, args.pattern)
 
 force_change = [int(x) for x in args.force_change.split(",")] if args.force_change is not None else ()
 
 grid = Grid()
 
-print(f"Loading {'pattern.txt' if args.pattern is None else args.pattern} and {args.rule}...")
-grid.load_pattern("pattern.txt" if args.pattern is None else args.pattern)
+print(f"Loading {args.pattern} and {args.rule}...")
+grid.load_pattern(args.pattern)
 grid.load_rule(args.rule)
 
 print("Running setup...")
