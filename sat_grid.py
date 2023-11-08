@@ -246,7 +246,7 @@ class Grid:
 
     def set_formula(self, force_change_lst=(), population_bound=""):
         """Sets the CNF formula according to the pattern"""
-        # First, add variables and constrains based on the pattern provided
+        # First, add variables and constraints based on the pattern provided
         for i in range(len(self.pattern)):
             for j in range(len(self.pattern[i])):
                 for k in range(len(self.pattern[i][j])):
@@ -276,12 +276,12 @@ class Grid:
                         self.formula.append(clause)
 
         # Enforce population bounds
-        clause = []
+        grid_vars = [[] for _ in range(len(self.pattern))] # retrieve variables for all generations
         for key in self.cnf_variables:
             var = self.get_cell_var(key[0], key[1], key[2])
-            if type(var) == int: clause.append(var)  # Check for CNF Literal (int)
+            if type(var) == int: grid_vars[key[0]].append(var)  # Check for CNF Literal (int)
 
-        # Using regex to parse string
+        # Using regex to parse population bounds argument
         bounds = re.findall("(?:>|<|>=|<=|=)[0-9]+", population_bound)
         for bound in bounds:
             pop_clauses = []
@@ -290,7 +290,7 @@ class Grid:
                 else: population = int(bound[1:]) + 1
 
                 # Clauses that bound the population
-                pop_clauses = PBEnc.atleast(lits=clause, bound=population, top_id=self.num_vars)
+                pop_clauses = PBEnc.atleast(lits=grid_vars[0], bound=population, top_id=self.num_vars)
 
             elif bound[0] == "<":  # Smaller than
                 if "=" in bound:
@@ -299,13 +299,13 @@ class Grid:
                     population = int(bound[1:]) + 1
 
                 # Clauses that bound the population
-                pop_clauses = PBEnc.atmost(lits=clause, bound=population, top_id=self.num_vars)
+                pop_clauses = PBEnc.atmost(lits=grid_vars[0], bound=population, top_id=self.num_vars)
 
             elif bound[0] == "=":  # Equal to
                 population = int(bound[1:])
 
                 # Clauses that bound the population
-                pop_clauses = PBEnc.equals(lits=clause, bound=population, top_id=self.num_vars)
+                pop_clauses = PBEnc.equals(lits=grid_vars[0], bound=population, top_id=self.num_vars)
 
             for cl in pop_clauses:  # Adding in the population clauses
                 self.formula.append(cl)
